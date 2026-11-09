@@ -1,0 +1,1 @@
+Bilder aus dem Biosol-Repo (assets/) hier ablegen: hero-1..3.webp, rundstammhaus.webp, holzpellets.webp, strohfeld.webp, holzhaus-detail.webp, solarthermie.webp, blockhaus.webp, biosol-logo-wide.webp, favicon-32.png; neu: windkraft.webp

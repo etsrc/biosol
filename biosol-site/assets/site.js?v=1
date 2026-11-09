@@ -1,0 +1,98 @@
+// Biosol Odessa — site behavior (language dropdown, hero slideshow,
+// contact obfuscation, form time token). Defer-loaded.
+
+(function () {
+  'use strict';
+
+  // ---- Contact obfuscation (runtime charcode rebuild) -------------------
+  // The visible strings never appear in the static HTML; scrapers grep'ing
+  // the source only see placeholder copy. Rotate by regenerating arrays.
+  const EMAIL = [
+    105,110,102,111,64,98,105,111,115,111,108,111,100,101,115,115,97,46,101,117
+  ]; // info@biosolodessa.eu
+  const TEL_HREF = [43,51,56,54,51,55,54,57,49,54,55,55]; // +38637691677
+  const TEL_DISPLAY = [43,51,56,32,54,51,32,55,54,57,32,49,54,32,55,55]; // +38 63 769 16 77
+  // Romanized Odesa street address — one canonical form across languages.
+  const ADDRESS = [
+    75,111,109,112,111,122,105,116,111,114,97,32,78,105,115,104,99,104,121,110,115,107,111,104,111,
+    32,66,108,118,100,32,49,54,44,32,65,112,116,32,51,56,60,98,114,62,
+    54,53,48,49,56,32,79,100,101,115,97,44,32,85,107,114,97,105,110,101
+  ];
+
+  function rebuildEmail()    { return String.fromCharCode.apply(null, EMAIL); }
+  function rebuildTelHref()   { return String.fromCharCode.apply(null, TEL_HREF); }
+  function rebuildTelDisp()  { return String.fromCharCode.apply(null, TEL_DISPLAY); }
+  function rebuildAddress()  { return String.fromCharCode.apply(null, ADDRESS); }
+
+  function wireContactLinks() {
+    const email = rebuildEmail();
+    document.querySelectorAll('a[data-email-link]').forEach((link) => {
+      const subject = link.getAttribute('data-email-subject');
+      const suffix = subject ? '?subject=' + encodeURIComponent(subject) : '';
+      link.setAttribute('href', 'mailto:' + email + suffix);
+      if (link.getAttribute('data-email-display') === 'email') {
+        link.textContent = email;
+      }
+    });
+    const tel = rebuildTelHref();
+    document.querySelectorAll('a[data-tel-link]').forEach((link) => {
+      link.setAttribute('href', 'tel:' + tel);
+    });
+    const telDisp = rebuildTelDisp();
+    document.querySelectorAll('[data-tel-display]').forEach((el) => {
+      el.textContent = telDisp;
+    });
+    const addr = rebuildAddress();
+    document.querySelectorAll('[data-address-display]').forEach((el) => {
+      el.innerHTML = addr;
+    });
+  }
+
+  // ---- Form time token --------------------------------------------------
+  function stampTimeToken() {
+    const t = document.querySelector('input[name="t_token"]');
+    if (t) t.value = String(Date.now());
+  }
+
+  // ---- Language dropdown -----------------------------------------------
+  function wireLanguageMenu() {
+    const menu = document.querySelector('[data-language-menu]');
+    const toggle = document.querySelector('[data-language-toggle]');
+    if (!menu || !toggle) return;
+
+    function close() {
+      menu.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = menu.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target)) close();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+    });
+  }
+
+  // ---- Hero crossfade slideshow (5s interval) ---------------------------
+  function wireHeroSlideshow() {
+    const imgs = Array.from(document.querySelectorAll('.hero-bg-img'));
+    if (imgs.length < 2) return;
+    let idx = 0;
+    setInterval(() => {
+      imgs[idx].classList.remove('active');
+      idx = (idx + 1) % imgs.length;
+      imgs[idx].classList.add('active');
+    }, 5000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    wireLanguageMenu();
+    wireHeroSlideshow();
+    stampTimeToken();
+    wireContactLinks();
+  });
+})();
